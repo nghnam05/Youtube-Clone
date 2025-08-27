@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+.li-profile {
+    @apply p-2 hover:bg-[#383838] rounded flex items-center gap-x-2;
+}
+
+.hastag-span {
+    @apply text-blue-500 hover:underline cursor-pointer;
+}
