@@ -117,7 +117,7 @@ const HomePage = ({ isOpen }) => {
       </div>
 
       <div
-        className="home-page_main h-full grid pt-[150px] pb-8 px-8 
+        className="home-page_main h-full grid pt-[140px] pb-8 px-8 
     grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
       >
         {/* Video Item */}

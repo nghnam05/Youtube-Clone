@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 
 const categories = [
   "Tất cả",
@@ -27,42 +30,79 @@ const categories = [
   "Hoạt hình",
 ];
 
+// 1️⃣ Schema validation
+const schema = yup.object().shape({
+  title: yup
+    .string()
+    .required("Tiêu đề không được để trống")
+    .min(3, "Tiêu đề phải ít nhất 3 ký tự"),
+  description: yup
+    .string()
+    .required("Mô tả không được để trống")
+    .min(10, "Mô tả quá ngắn"),
+  tags: yup.string().required("Vui lòng nhập ít nhất 1 tag"),
+  category: yup.string().required("Vui lòng chọn thể loại"),
+  video: yup.mixed().required("Vui lòng chọn video"),
+  thumbnail: yup.mixed().required("Vui lòng chọn thumbnail"),
+});
+
 const UploadPage = ({ isSidebarOpen }) => {
-  const [video, setVideo] = useState(null);
-  const [thumbnail, setThumbnail] = useState(null);
-  const [category, setCategory] = useState(categories[0]);
+  const [videoPreview, setVideoPreview] = useState(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const navigate = useNavigate();
 
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: yupResolver(schema),
+    mode: "onBlur",
+  });
+
+  const video = watch("video");
+  const thumbnail = watch("thumbnail");
+
   const handleVideoChange = (e) => {
-    setVideo(URL.createObjectURL(e.target.files[0]));
+    const file = e.target.files[0];
+    if (file) {
+      setVideoPreview(URL.createObjectURL(file));
+      setValue("video", file, { shouldValidate: true });
+    }
   };
 
   const handleThumbnailChange = (e) => {
-    setThumbnail(URL.createObjectURL(e.target.files[0]));
+    const file = e.target.files[0];
+    if (file) {
+      setThumbnailPreview(URL.createObjectURL(file));
+      setValue("thumbnail", file, { shouldValidate: true });
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    alert(`Video đã được đăng tải thành công!\nThể loại: ${category}`);
-    navigate("/"); // sau khi upload xong về trang chủ
+  const onSubmit = (data) => {
+    alert(
+      `Video "${data.title}" đã được đăng tải thành công!\nThể loại: ${data.category}`
+    );
+    navigate("/");
+    console.log(data)
   };
 
   return (
     <div
-      className={`flex flex-col mt-[65px] px-2 py-3 sm:px-4 lg:px-6 bg-black text-white min-h-screen transition-all duration-300 
+      className={`flex flex-col mt-[65px] px-4 py-3 sm:px-4 lg:px-6 bg-black text-white min-h-screen transition-all duration-300
       ${isSidebarOpen ? "lg:ml-[280px]" : "lg:ml-0"}`}
     >
-      {/* Header */}
       <div className="flex items-center justify-between mb-6 border-b border-gray-800 pb-3">
         <h1 className="text-2xl font-bold">Tải video lên</h1>
       </div>
 
-      {/* Form */}
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         className="grid grid-cols-1 lg:grid-cols-2 gap-6"
       >
-        {/* Left: Upload */}
+        {/* Left */}
         <div className="bg-[#111] p-5 rounded-xl shadow-lg">
           <h2 className="text-lg font-semibold mb-3">📹 Video</h2>
           <label className="block w-full cursor-pointer">
@@ -73,9 +113,9 @@ const UploadPage = ({ isSidebarOpen }) => {
               className="hidden"
             />
             <div className="w-full p-6 text-center border-2 border-dashed border-gray-700 rounded-lg hover:border-red-500 transition">
-              {video ? (
+              {videoPreview ? (
                 <video
-                  src={video}
+                  src={videoPreview}
                   controls
                   className="w-full rounded-lg shadow-md"
                 />
@@ -84,8 +124,10 @@ const UploadPage = ({ isSidebarOpen }) => {
               )}
             </div>
           </label>
+          {errors.video && (
+            <p className="text-red-500 text-sm mt-1">{errors.video.message}</p>
+          )}
 
-          {/* Thumbnail */}
           <h2 className="text-lg font-semibold mt-6 mb-3">🖼 Thumbnail</h2>
           <label className="block w-full cursor-pointer">
             <input
@@ -94,10 +136,10 @@ const UploadPage = ({ isSidebarOpen }) => {
               onChange={handleThumbnailChange}
               className="hidden"
             />
-            <div className="w-full p-6  lg:min-h-[150px] text-center border-2 border-dashed border-gray-700 rounded-lg hover:border-red-500 transition">
-              {thumbnail ? (
+            <div className="w-full p-6 lg:min-h-[150px] text-center border-2 border-dashed border-gray-700 rounded-lg hover:border-red-500 transition">
+              {thumbnailPreview ? (
                 <img
-                  src={thumbnail}
+                  src={thumbnailPreview}
                   alt="Thumbnail"
                   className="w-full rounded-lg shadow-md"
                 />
@@ -106,9 +148,14 @@ const UploadPage = ({ isSidebarOpen }) => {
               )}
             </div>
           </label>
+          {errors.thumbnail && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.thumbnail.message}
+            </p>
+          )}
         </div>
 
-        {/* Right: Info */}
+        {/* Right */}
         <div className="bg-[#111] p-5 rounded-xl shadow-lg">
           <h2 className="text-lg font-semibold mb-3">📝 Thông tin video</h2>
 
@@ -116,38 +163,52 @@ const UploadPage = ({ isSidebarOpen }) => {
             <span className="text-sm text-gray-400">Tiêu đề</span>
             <input
               type="text"
+              {...register("title")}
               placeholder="Nhập tiêu đề video..."
               className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 mt-1 placeholder-gray-400
                         focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
             />
+            {errors.title && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.title.message}
+              </p>
+            )}
           </label>
 
           <label className="block mb-3">
             <span className="text-sm text-gray-400">Mô tả</span>
             <textarea
+              {...register("description")}
               placeholder="Nhập mô tả video..."
               rows="5"
               className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 mt-1 placeholder-gray-400
                         focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
             ></textarea>
+            {errors.description && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.description.message}
+              </p>
+            )}
           </label>
 
           <label className="block mb-3">
             <span className="text-sm text-gray-400">Tags</span>
             <input
               type="text"
+              {...register("tags")}
               placeholder="Ví dụ: reactjs, học lập trình..."
               className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 mt-1 placeholder-gray-400
                         focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
             />
+            {errors.tags && (
+              <p className="text-red-500 text-sm mt-1">{errors.tags.message}</p>
+            )}
           </label>
 
-          {/* Category */}
           <label className="block mb-3">
             <span className="text-sm text-gray-400">Thể loại</span>
             <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              {...register("category")}
               className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 mt-1 text-white
                         focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
             >
@@ -161,11 +222,16 @@ const UploadPage = ({ isSidebarOpen }) => {
                 </option>
               ))}
             </select>
+            {errors.category && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.category.message}
+              </p>
+            )}
           </label>
         </div>
 
         {/* Buttons */}
-        <div className="flex gap-3 lg:col-span-2 justify-center">
+        <div className="flex gap-10 lg:col-span-2 justify-center">
           <button
             type="button"
             onClick={() => navigate("/")}
@@ -175,7 +241,8 @@ const UploadPage = ({ isSidebarOpen }) => {
           </button>
           <button
             type="submit"
-            className="px-6 py-2 bg-red-600 rounded-full hover:bg-red-700 font-medium transition"
+            disabled={isSubmitting}
+            className="px-6 py-2 bg-red-600 rounded-full hover:bg-red-700 font-medium transition disabled:opacity-50"
           >
             Đăng tải
           </button>

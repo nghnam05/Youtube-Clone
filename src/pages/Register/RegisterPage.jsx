@@ -1,44 +1,62 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+
+// 1️⃣ Schema validation
+const schema = yup.object().shape({
+  fullname: yup
+    .string()
+    .required("Họ tên không được để trống")
+    .min(3, "Họ tên phải ít nhất 3 ký tự"),
+  username: yup
+    .string()
+    .email("Email không hợp lệ")
+    .required("Email không được để trống"),
+  password: yup
+    .string()
+    .required("Mật khẩu không được để trống")
+    .min(6, "Mật khẩu phải ít nhất 6 ký tự"),
+  avatar: yup.string().required("Vui lòng chọn ảnh đại diện"),
+});
 
 const RegisterPage = () => {
-  const [registerFeild, setRegisterFeild] = useState({
-    fullname: "",
-    username: "",
-    password: "",
-    avatar: "",
-  });
   const [selectedImage, setSelectedImage] = useState(null);
 
-  // Xử lý chọn ảnh và hiển thị preview
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: yupResolver(schema),
+    mode: "onBlur", // validate khi blur
+  });
+
+  // 2️⃣ Xử lý upload ảnh
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const previewUrl = URL.createObjectURL(file);
       setSelectedImage(previewUrl);
-      setRegisterFeild({ ...registerFeild, avatar: previewUrl });
+      setValue("avatar", previewUrl, { shouldValidate: true }); // set value cho RHF
     }
   };
 
-  const handleRegister = (event, nameFeild) => {
-    setRegisterFeild({ ...registerFeild, [nameFeild]: event.target.value });
-  };
-
-  useEffect(() => {
-    console.log(registerFeild);
-  }, [registerFeild]);
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    console.log("Dữ liệu gửi lên backend:", registerFeild);
-    
+  // 3️⃣ Submit form
+  const onSubmit = (data) => {
+    console.log("Dữ liệu gửi lên backend:", data);
+    reset();
+    // TODO: gửi data lên backend bằng fetch/axios
   };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-[#0f0f0f] text-white px-4 sm:px-6 md:px-8">
       <div className="w-full max-w-md sm:max-w-lg md:max-w-xl bg-[#212121] p-6 sm:p-8 rounded-lg shadow-lg">
         {/* Logo */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-2 md:mb-6">
           <img
             src="https://upload.wikimedia.org/wikipedia/commons/4/42/YouTube_icon_%282013-2017%29.png"
             alt="YouTube Logo"
@@ -55,33 +73,54 @@ const RegisterPage = () => {
         </p>
 
         {/* Form */}
-        <form className="space-y-4" onSubmit={handleSubmit} autoComplete="off">
-          <input
-            type="text"
-            name="fullname"
-            value={registerFeild.fullname}
-            onChange={(event) => handleRegister(event, "fullname")}
-            placeholder="Tên của bạn"
-            className="w-full px-3 sm:px-4 py-2 border border-gray-600 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            type="email"
-            name="username"
-            value={registerFeild.username}
-            onChange={(event) => handleRegister(event, "username")}
-            placeholder="Email"
-            className="w-full px-3 sm:px-4 py-2 border border-gray-600 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            type="password"
-            name="password"
-            value={registerFeild.password}
-            onChange={(event) => handleRegister(event, "password")}
-            placeholder="Mật khẩu"
-            className="w-full px-3 sm:px-4 py-2 border border-gray-600 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
+          autoComplete="off"
+        >
+          <div>
+            <input
+              type="text"
+              placeholder="Tên của bạn"
+              {...register("fullname")}
+              className="w-full px-3 sm:px-4 py-2 border border-gray-600 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {errors.fullname && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.fullname.message}
+              </p>
+            )}
+          </div>
 
-          {/* Upload ảnh */}
+          <div>
+            <input
+              type="email"
+              placeholder="Email"
+              {...register("username")}
+              className="w-full px-3 sm:px-4 py-2 border border-gray-600 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {errors.username && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.username.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <input
+              type="password"
+              placeholder="Mật khẩu"
+              {...register("password")}
+              className="w-full px-3 sm:px-4 py-2 border border-gray-600 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.password.message}
+              </p>
+            )}
+          </div>
+
+          {/* Upload avatar */}
           <div className="flex flex-col items-center gap-3">
             <label
               htmlFor="avatar"
@@ -96,6 +135,11 @@ const RegisterPage = () => {
               onChange={handleImageChange}
               className="hidden"
             />
+            {errors.avatar && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.avatar.message}
+              </p>
+            )}
             {selectedImage && (
               <div className="w-24 h-24 overflow-hidden border-2 border-gray-500">
                 <img
@@ -110,7 +154,8 @@ const RegisterPage = () => {
           {/* Register button */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 sm:py-3 rounded-lg hover:bg-blue-700 transition"
+            disabled={isSubmitting}
+            className="w-full bg-blue-600 text-white py-2 sm:py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
           >
             Tạo tài khoản
           </button>

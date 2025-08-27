@@ -96,31 +96,49 @@ const Navbar = ({ isSidebarOpen, setSidebarOpen }) => {
           <SearchIcon className="text-white" />
         </button>
         {showSearch && (
-          <div className="absolute top-16 left-0 z-10 w-full px-4 md:hidden">
-            <div className="flex items-center border border-gray-700 rounded-full bg-[#121212]">
+          <div className="absolute top-16 left-0 z-50 w-full px-4 sm:px-6 md:hidden">
+            <div className="flex items-center border border-gray-700 rounded-full bg-[#121212] shadow-md overflow-hidden">
+              {/* Input */}
               <input
                 type="text"
                 placeholder="Tìm kiếm"
-                className="flex-1 px-4 py-2 outline-none text-base bg-transparent text-white"
+                className="
+          flex-1
+          px-4 py-2
+          text-white text-base
+          placeholder-gray-400
+          bg-transparent
+          focus:outline-none
+        "
               />
+
+              {/* Button */}
               <button
-                className="px-4 hover:bg-[#272727] border-l border-gray-700"
+                type="button"
+                className="
+          px-4
+          py-2
+          border-l border-gray-700
+          hover:bg-[#272727]
+          transition
+          flex items-center justify-center
+        "
                 onClick={() => setShowSearch(false)}
               >
-                <SearchIcon className="text-white" />
+                <SearchIcon className="text-white w-5 h-5" />
               </button>
             </div>
           </div>
         )}
 
         {/* Mic */}
-        <button className="hidden md:block ml-4 p-2 rounded-full bg-[#272727]">
+        <button className="hidden md:block ml-6 p-2 rounded-full bg-[#272727]">
           <MicIcon className="text-white" />
         </button>
       </div>
 
       {/* phần thông tin */}
-      <div className="flex items-center gap-x-2 md:gap-x-3">
+      <div className="flex items-center gap-x-2 md:gap-x-5">
         {isLoggedIn ? (
           <>
             <Link to={"/upload"}>

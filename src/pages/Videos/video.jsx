@@ -5,7 +5,6 @@ import '../../assets/css/customStyle.css'
 import ThumbUpAltOutlinedIcon from "@mui/icons-material/ThumbUpAltOutlined";
 import ThumbDownAltOutlinedIcon from "@mui/icons-material/ThumbDownAltOutlined";
 import ShareOutlinedIcon from "@mui/icons-material/ShareOutlined";
-import BookmarkBorderOutlinedIcon from "@mui/icons-material/BookmarkBorderOutlined";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 
@@ -76,7 +75,7 @@ const VideoPage = ({ isSidebarOpen }) => {
             {buttons.map((btn, i) => (
               <button
                 key={i}
-                className="flex-none px-3 sm:px-4 py-1 sm:py-2 bg-[#272727] hover:bg-[#3f3f3f] 
+                className="flex-none px-2.5 sm:px-4 py-1 sm:py-2 bg-[#272727] hover:bg-[#3f3f3f] 
                  rounded-full flex items-center justify-center gap-1 
                  text-xs sm:text-sm transition-colors duration-200 whitespace-nowrap"
               >
