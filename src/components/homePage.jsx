@@ -55,7 +55,7 @@ const HomePage = ({ isOpen }) => {
       if (!isDown) return;
       e.preventDefault();
       const x = e.pageX - slider.offsetLeft;
-      const walk = (x - startX) * 1; // multiplier để tăng/giảm độ nhạy
+      const walk = (x - startX) * 1; 
       slider.scrollLeft = scrollLeft - walk;
     };
 

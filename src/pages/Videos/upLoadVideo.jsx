@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import axios from "axios";
 
 const categories = [
   "Tất cả",
@@ -30,7 +31,7 @@ const categories = [
   "Hoạt hình",
 ];
 
-// 1️⃣ Schema validation
+// ✅ Schema validation
 const schema = yup.object().shape({
   title: yup
     .string()
@@ -42,42 +43,104 @@ const schema = yup.object().shape({
     .min(10, "Mô tả quá ngắn"),
   tags: yup.string().required("Vui lòng nhập ít nhất 1 tag"),
   category: yup.string().required("Vui lòng chọn thể loại"),
-  video: yup.mixed().required("Vui lòng chọn video"),
-  thumbnail: yup.mixed().required("Vui lòng chọn thumbnail"),
+  video: yup.string().required("Vui lòng chọn video"),
+  thumbnail: yup.string().required("Vui lòng chọn thumbnail"),
 });
 
 const UploadPage = ({ isSidebarOpen }) => {
   const [videoPreview, setVideoPreview] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
+  const [progressVideo, setProgressVideo] = useState(0);
+  const [progressThumbnail, setProgressThumbnail] = useState(0);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: yupResolver(schema),
     mode: "onBlur",
+    defaultValues: { video: "", thumbnail: "" },
   });
 
-  const video = watch("video");
-  const thumbnail = watch("thumbnail");
+  const cloudName = "dp1uvjzpc";
+  const uploadPreset = "youtube-clone";
 
-  const handleVideoChange = (e) => {
+  // ✅ Upload video lên Cloudinary
+  const handleVideoChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setVideoPreview(URL.createObjectURL(file));
-      setValue("video", file, { shouldValidate: true });
+    if (!file) return;
+
+    setVideoPreview(URL.createObjectURL(file));
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
+    formData.append("folder", "videos");
+
+    try {
+      setIsUploadingVideo(true);
+      setProgressVideo(0);
+
+      const res = await axios.post(
+        `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`,
+        formData,
+        {
+          onUploadProgress: (event) => {
+            if (event.total) {
+              const percent = Math.round((event.loaded * 100) / event.total);
+              setProgressVideo(percent);
+            }
+          },
+        }
+      );
+
+      setValue("video", res.data.secure_url, { shouldValidate: true });
+    } catch (err) {
+      console.error("Lỗi upload video:", err);
+    } finally {
+      setIsUploadingVideo(false);
     }
   };
 
-  const handleThumbnailChange = (e) => {
+  // ✅ Upload thumbnail lên Cloudinary
+  const handleThumbnailChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setThumbnailPreview(URL.createObjectURL(file));
-      setValue("thumbnail", file, { shouldValidate: true });
+    if (!file) return;
+
+    setThumbnailPreview(URL.createObjectURL(file));
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
+    formData.append("folder", "thumbnails");
+
+    try {
+      setIsUploadingThumbnail(true);
+      setProgressThumbnail(0);
+
+      const res = await axios.post(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        formData,
+        {
+          onUploadProgress: (event) => {
+            if (event.total) {
+              const percent = Math.round((event.loaded * 100) / event.total);
+              setProgressThumbnail(percent);
+            }
+          },
+        }
+      );
+
+      setValue("thumbnail", res.data.secure_url, { shouldValidate: true });
+    } catch (err) {
+      console.error("Lỗi upload thumbnail:", err);
+    } finally {
+      setIsUploadingThumbnail(false);
     }
   };
 
@@ -86,7 +149,7 @@ const UploadPage = ({ isSidebarOpen }) => {
       `Video "${data.title}" đã được đăng tải thành công!\nThể loại: ${data.category}`
     );
     navigate("/");
-    console.log(data)
+    console.log("Dữ liệu gửi đi:", data);
   };
 
   return (
@@ -128,6 +191,18 @@ const UploadPage = ({ isSidebarOpen }) => {
             <p className="text-red-500 text-sm mt-1">{errors.video.message}</p>
           )}
 
+          {isUploadingVideo && (
+            <>
+              <div className="w-full bg-gray-700 rounded-full h-2 mt-2">
+                <div
+                  className="bg-red-500 h-2 rounded-full transition-all"
+                  style={{ width: `${progressVideo}%` }}
+                ></div>
+              </div>
+              <p className="text-sm mt-1">{progressVideo}%</p>
+            </>
+          )}
+
           <h2 className="text-lg font-semibold mt-6 mb-3">🖼 Thumbnail</h2>
           <label className="block w-full cursor-pointer">
             <input
@@ -152,6 +227,18 @@ const UploadPage = ({ isSidebarOpen }) => {
             <p className="text-red-500 text-sm mt-1">
               {errors.thumbnail.message}
             </p>
+          )}
+
+          {isUploadingThumbnail && (
+            <>
+              <div className="w-full bg-gray-700 rounded-full h-2 mt-2">
+                <div
+                  className="bg-blue-500 h-2 rounded-full transition-all"
+                  style={{ width: `${progressThumbnail}%` }}
+                ></div>
+              </div>
+              <p className="text-sm mt-1">{progressThumbnail}%</p>
+            </>
           )}
         </div>
 
@@ -241,10 +328,12 @@ const UploadPage = ({ isSidebarOpen }) => {
           </button>
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUploadingVideo || isUploadingThumbnail}
             className="px-6 py-2 bg-red-600 rounded-full hover:bg-red-700 font-medium transition disabled:opacity-50"
           >
-            Đăng tải
+            {isSubmitting || isUploadingVideo || isUploadingThumbnail
+              ? "Đang xử lý..."
+              : "Đăng tải"}
           </button>
         </div>
       </form>
